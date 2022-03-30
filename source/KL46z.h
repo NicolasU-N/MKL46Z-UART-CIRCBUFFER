@@ -1,5 +1,5 @@
-#ifndef _KL46Z_H_
-#define _KL46Z_H_
+#ifndef KL46Z_H_
+#define KL46Z_H_
 
 #include "system_MKL46Z4.h"
 #include <stdbool.h>

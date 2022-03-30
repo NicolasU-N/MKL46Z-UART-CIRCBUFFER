@@ -59,7 +59,9 @@ const uint32_t scode[] = { //g -- a
 		(1 << SEG_A_PIN) | (0 << SEG_B_PIN) | (0 << SEG_C_PIN)
 				| (0 << SEG_D_PIN) | (1 << SEG_E_PIN) | (1 << SEG_F_PIN)
 				| (1 << SEG_G_PIN), //0b1110001, //15    //F
-		};
+		(0 << SEG_A_PIN) | (0 << SEG_B_PIN) | (0 << SEG_C_PIN)
+				| (0 << SEG_D_PIN) | (0 << SEG_E_PIN) | (0 << SEG_F_PIN)
+				| (1 << SEG_G_PIN), }; 			 //16	 //-
 
 void lcdInit() {
 	/* Initialize and enable LED */
@@ -82,11 +84,18 @@ void lcdInit() {
 }
 
 void lcdScan(char idx) {
-	//turn off all digits
+	lcdOff(); //OFF leds
+
+	if (idx == '-') {
+		PTE->PCOR |= scode[16];
+	} else {
+		PTE->PCOR |= scode[idx];
+	}
+}
+
+void lcdOff() {
 	PTE->PSOR |= (1u << SEG_A_PIN) | (1u << SEG_B_PIN) | (1u << SEG_C_PIN)
 			| (1u << SEG_D_PIN) | (1u << SEG_E_PIN) | (1u << SEG_F_PIN)
-			| (1u << SEG_G_PIN); //OFF led
-
-	PTE->PCOR |= scode[idx];
+			| (1u << SEG_G_PIN); //OFF leds
 }
 

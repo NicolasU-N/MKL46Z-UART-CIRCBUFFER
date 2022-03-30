@@ -10,11 +10,7 @@
 
 #include "stdint.h"
 #include "stdbool.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "stdlib.h"
 
 typedef struct {
 	int32_t indexRead;
@@ -60,16 +56,11 @@ bool ringBuffer_isEmpty(ringBuferData_struct *pRb);
 
 int32_t ringBuffer_getCount(ringBuferData_struct *pRb);
 
-
 /** @brief libera de memoria buffer circular
  **
  ** @param pRb puntero al buffer circular
  **
  **/
 void ringBuffer_deInit(ringBuferData_struct *pRb);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* RING_BUFFER_H_ */

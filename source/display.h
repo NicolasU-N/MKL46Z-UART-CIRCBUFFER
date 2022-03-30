@@ -26,4 +26,6 @@ void lcdInit();
 
 void lcdScan(char idx);
 
+void lcdOff();
+
 #endif /* DISPLAY_H_ */

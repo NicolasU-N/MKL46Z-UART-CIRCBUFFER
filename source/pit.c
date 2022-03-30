@@ -15,7 +15,7 @@ void pit_init_ch0(uint32_t ldval) {
 	PIT->MCR &= ~PIT_MCR_MDIS_MASK; //enable mdis
 
 	//Initialize PIT0 to count down from starting_value
-	PIT->CHANNEL[0].LDVAL = ldval; // 0x4FFFFF every 500ms   V = 0.00625 * 24000000–1    T(seconds) || 0.00468 * 24000000–1
+	PIT->CHANNEL[0].LDVAL = ldval; // every 500ms   V = 0.00625 * 24000000–1    T(seconds) || 0.003125 * 24000000–1
 	PIT->CHANNEL[0].TCTRL &= PIT_TCTRL_CHN_MASK;	//No chaining of timers
 	PIT->CHANNEL[0].TCTRL |= PIT_TCTRL_TEN_MASK;
 	PIT->CHANNEL[0].TCTRL |= PIT_TFLG_TIF_MASK;
@@ -45,21 +45,20 @@ void clear_flag_ch1() {
 	PIT->CHANNEL[1].TFLG &= PIT_TFLG_TIF_MASK;
 }
 
-
-bool get_flag_ch0() {
+char get_flag_ch0() {
 	if (PIT->CHANNEL[0].TFLG & PIT_TFLG_TIF_MASK) {
 		clear_flag_ch0();
-		return true;
+		return SI;
 	} else {
-		return false;
+		return NO;
 	}
 }
 
-bool get_flag_ch1() {
+char get_flag_ch1() {
 	if (PIT->CHANNEL[1].TFLG & PIT_TFLG_TIF_MASK) {
 		clear_flag_ch1();
-		return true;
+		return SI;
 	} else {
-		return false;
+		return NO;
 	}
 }

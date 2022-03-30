@@ -28,25 +28,25 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: MKL46Z4_UART_LCD_BUFF.axf
+all: MKL46Z-UART-CIRCBUFFER.axf
 
 # Tool invocations
-MKL46Z4_UART_LCD_BUFF.axf: $(OBJS) $(USER_OBJS)
+MKL46Z-UART-CIRCBUFFER.axf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU Linker'
-	arm-none-eabi-gcc -nostdlib -Xlinker -Map="MKL46Z4_UART_LCD_BUFF.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -Xlinker --cref -mcpu=cortex-m0plus -mthumb -T MKL46Z4_UART_LCD_BUFF_Debug.ld -o "MKL46Z4_UART_LCD_BUFF.axf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-gcc -nostdlib -Xlinker -Map="MKL46Z-UART-CIRCBUFFER.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -Xlinker --cref -mcpu=cortex-m0plus -mthumb -T MKL46Z4_UART_LCD_BUFF_Debug.ld -o "MKL46Z-UART-CIRCBUFFER.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) MKL46Z4_UART_LCD_BUFF.axf
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) MKL46Z-UART-CIRCBUFFER.axf
 	-@echo ' '
 
 post-build:
 	-@echo 'Performing post-build steps'
-	-arm-none-eabi-size "MKL46Z4_UART_LCD_BUFF.axf"; # arm-none-eabi-objcopy -v -O binary "MKL46Z4_UART_LCD_BUFF.axf" "MKL46Z4_UART_LCD_BUFF.bin" ; # checksum -p MKL46Z256xxx4 -d "MKL46Z4_UART_LCD_BUFF.bin";
+	-arm-none-eabi-size "MKL46Z-UART-CIRCBUFFER.axf"; # arm-none-eabi-objcopy -v -O binary "MKL46Z-UART-CIRCBUFFER.axf" "MKL46Z-UART-CIRCBUFFER.bin" ; # checksum -p MKL46Z256xxx4 -d "MKL46Z-UART-CIRCBUFFER.bin";
 	-@echo ' '
 
 .PHONY: all clean dependents post-build

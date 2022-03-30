@@ -6,7 +6,6 @@
  */
 
 #include "ringBuffer.h"
-#include "stdlib.h"
 
 ringBuferData_struct* ringBuffer_init(int32_t size) {
 	ringBuferData_struct *rb;
@@ -28,24 +27,24 @@ ringBuferData_struct* ringBuffer_init(int32_t size) {
 }
 
 bool ringBuffer_putData(ringBuferData_struct *pRb, char data) {
-	ringBuferData_struct *rb = pRb;
+	//ringBuferData_struct *rb = pRb;
 	bool ret = true;
 
-	rb->pBuf[rb->indexWrite] = data;
+	pRb->pBuf[pRb->indexWrite] = data;
 
-	rb->indexWrite++;
-	if (rb->indexWrite >= rb->size)
-		rb->indexWrite = 0;
+	pRb->indexWrite++;
+	if (pRb->indexWrite >= pRb->size)
+		pRb->indexWrite = 0;
 
-	if (rb->count < rb->size) {
-		rb->count++;
+	if (pRb->count < pRb->size) {
+		pRb->count++;
 	} else {
 		/* si el buffer está lleno incrementa en uno indexRead
 		 * haciendo que se pierda el dato más viejo y devuelve
 		 * true para indicar que se estan perdiendo datos */
-		rb->indexRead++;
-		if (rb->indexRead >= rb->size)
-			rb->indexRead = 0;
+		pRb->indexRead++;
+		if (pRb->indexRead >= pRb->size)
+			pRb->indexRead = 0;
 		ret = false;
 	}
 
@@ -53,16 +52,16 @@ bool ringBuffer_putData(ringBuferData_struct *pRb, char data) {
 }
 
 bool ringBuffer_getData(ringBuferData_struct *pRb, char *data) {
-	ringBuferData_struct *rb = pRb;
+	//ringBuferData_struct *rb = pRb;
 	bool ret = true;
 
-	if (rb->count) {
-		*data = rb->pBuf[rb->indexRead];
+	if (pRb->count) {
+		*data = pRb->pBuf[pRb->indexRead];
 
-		rb->indexRead++;
-		if (rb->indexRead >= rb->size)
-			rb->indexRead = 0;
-		rb->count--;
+		pRb->indexRead++;
+		if (pRb->indexRead >= pRb->size)
+			pRb->indexRead = 0;
+		pRb->count--;
 	} else {
 		ret = false;
 	}
@@ -71,20 +70,20 @@ bool ringBuffer_getData(ringBuferData_struct *pRb, char *data) {
 }
 
 bool ringBuffer_isFull(ringBuferData_struct *pRb) {
-	ringBuferData_struct *rb = pRb;
+	//ringBuferData_struct *rb = pRb;
 
-	return rb->count == ((rb->size) * 0.75); //rb->size ((rb->size) * 0.75)
+	return pRb->count >= ((pRb->size) * 0.75); //rb->size ((rb->size) * 0.75) 48
 }
 
 bool ringBuffer_isEmpty(ringBuferData_struct *pRb) {
-	ringBuferData_struct *rb = pRb;
+	//ringBuferData_struct *rb = pRb;
 
-	return rb->count == 0; //0 ((rb->size) * 0.25)
+	return pRb->count == ((pRb->size) * 0.25); //0 ((rb->size) * 0.25)
 }
 
 int32_t ringBuffer_getCount(ringBuferData_struct *pRb) {
-	ringBuferData_struct *rb = pRb;
-	return rb->count;
+	//ringBuferData_struct *rb = pRb;
+	return pRb->count;
 }
 
 void ringBuffer_deInit(ringBuferData_struct *rb) {

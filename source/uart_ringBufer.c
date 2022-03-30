@@ -7,19 +7,30 @@
 
 #include "uart_ringBuffer.h"
 
-uint16_t number;
-uint16_t divisor_check;
-uint16_t divisor;
-int8_t power;
-char send_count;
+static uint16_t number;
+static uint16_t divisor_check;
+static uint16_t divisor;
+static int8_t power;
+static char send_count;
 
-//static
-ringBuferData_struct *pRingBufferRx;
+extern Tm_Control c_tiempo;
+extern ringBuferData_struct *pRingBufferRx;
+extern char flag_xoff;
+
+void clock_config() {
+	/*config clock Rx Tx*/
+	SIM_SCGC5 |= (1U << SIM_SCGC5_SHIFT(PORTA));
+	/*setting low clock 32kHz and FLL 1464 for clock 48MHz*/
+	MCG_C4 = (MCG_C4 & 0xE0u) | (1u << MCG_C4_DMX32_SHIFT)
+			| (1u << MCG_C4_DRS_SHIFT);
+	SystemCoreClockUpdate();
+	/*enable clock*/
+	SIM_SCGC4 |= (1u << SIM_SCGC4_UART0_SHIFT);
+}
 
 void uart0_init(unsigned int uart0clk, unsigned int baud_rate) {
-
 	/*setting buffer*/
-	pRingBufferRx = ringBuffer_init(64); // 32 64 200
+	pRingBufferRx = ringBuffer_init(BUFF_SIZE); // 32 64 200
 
 	unsigned int calculated_baud = 0;
 	unsigned int baud_diff = 0;
@@ -104,79 +115,56 @@ void uart0_init(unsigned int uart0clk, unsigned int baud_rate) {
 	UART0_C1 = 0x00u;
 	/*clear NF flag*/
 	UART0_S1 |= (1 << 2u);
+
 	/* Enable receiver interrupt receive*/
 	UART0_C2 = 0x0Cu | 1 << UART0_C2_RIE_SHIFT;
-
 	//------------------------------------------------------ Wo interrupt
 	//UART0_C2 = 0x0Cu;
 }
 
 void uart_send_byte(char data_input) {
+	UART0_D = data_input;
 	while (!(UART0_S1 & (1 << UART0_S1_TDRE_SHIFT)))
 		;
-	UART0_D = data_input;
 	//while(!(UART0_S1 & (1 << UART0_S1_TC_SHIFT))); //Waiting for transmission to get complete
 }
 
-char uart_receive_byte() {
-	while (!(UART0_S1 & (1 << UART0_S1_RDRF_SHIFT)))
-		;
-	//ringBuffer_putData(pRingBufferRx, UART0_D);
-	return UART0_D;
-}
-
-void uart_send_string(unsigned char *str_data) {
+void uart_send_string(char *str_data) {
 	while (*str_data) {
 		uart_send_byte(*str_data);
 		str_data++;
 	}
 }
 
-void UART0_IRQHandler() {
+char uart_receive_byte() {
+	while (!(UART0_S1 & (1 << UART0_S1_RDRF_SHIFT)))
+		;
+
+	return UART0_D;
+	//if ((UART0_S1 & (1 << UART0_S1_RDRF_SHIFT))) {
 	//uart_send_byte(UART0_D);
+	//if (ringBuffer_putData(pRingBufferRx, UART0_D)) {
+	//uart_send_byte(UART0_D);
+	//	return SI;
+	//} else {
+	//	return NO;
+	//}
+	//return UART0_D;
+	//}
+	//ringBuffer_putData(pRingBufferRx, UART0_D);
+}
+
+void UART0_IRQHandler() {
 	// agregar dato al buffer
 	ringBuffer_putData(pRingBufferRx, UART0_D);
-}
+	Tm_Inicie_timeout(&c_tiempo, N_TO_NEW_DATA, 3076); //10 SEG
 
-/** \brief recibe datos por puerto serie accediendo al RB
- **
- ** \param[inout] pBuf buffer a donde guardar los datos
- ** \param[in] size tamaño del buffer
- ** \return cantidad de bytes recibidos
- **/
-
-bool uart0_ringBuffer_getData(char *pBuf, int32_t size) {
-	bool ret = false;
-
-	while (!ringBuffer_isEmpty(pRingBufferRx) && ret < size) {
-
-		if (ringBuffer_isFull(pRingBufferRx)) {
-			uart_send_string("FULL BUFF\r\n");
-			//uart_send_byte((char)ringBuffer_getCount(pRingBufferRx));
-			//uart_send_byte(0x13); //XOFF
-			uart_send_byte(0x19); //XOFF REAL TERM
-
-		} else {
-			//uart_send_byte(0x11); //XON
-			uart_send_byte(0x17); //XON REAL TERM
-		}
-
-		ringBuffer_getData(pRingBufferRx, &pBuf[ret]);
-		ret = true;
+	if (!ringBuffer_isFull(pRingBufferRx)) {
+		flag_xoff = NO;
+	} else {
+		UART0_D = XOFF; //0x13 XOFF || 0X19 XOFF REALTERM
+		flag_xoff = SI;
 	}
-
-	return ret;
-}
-
-void clock_config() {
-	/*config clock Rx Tx*/
-	SIM_SCGC5 |= (1U << SIM_SCGC5_SHIFT(PORTA));
-	/*setting low clock 32kHz and FLL 1464 for clock 48MHz*/
-	MCG_C4 = (MCG_C4 & 0xE0u) | (1u << MCG_C4_DMX32_SHIFT)
-			| (1u << MCG_C4_DRS_SHIFT);
-	SystemCoreClockUpdate();
-	/*enable clock*/
-	SIM_SCGC4 |= (1u << SIM_SCGC4_UART0_SHIFT);
 }
 
 /*Printf Function*/
