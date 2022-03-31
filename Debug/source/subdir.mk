@@ -9,6 +9,7 @@ C_SRCS += \
 ../source/display.c \
 ../source/mtb.c \
 ../source/pit.c \
+../source/pwm.c \
 ../source/ringBuffer.c \
 ../source/semihost_hardfault.c \
 ../source/uart_ringBufer.c 
@@ -19,6 +20,7 @@ OBJS += \
 ./source/display.o \
 ./source/mtb.o \
 ./source/pit.o \
+./source/pwm.o \
 ./source/ringBuffer.o \
 ./source/semihost_hardfault.o \
 ./source/uart_ringBufer.o 
@@ -29,6 +31,7 @@ C_DEPS += \
 ./source/display.d \
 ./source/mtb.d \
 ./source/pit.d \
+./source/pwm.d \
 ./source/ringBuffer.d \
 ./source/semihost_hardfault.d \
 ./source/uart_ringBufer.d 

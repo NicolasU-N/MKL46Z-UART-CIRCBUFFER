@@ -50,7 +50,7 @@ char ch;		// buffer character
 #define D_REPOSO		0
 #define D_NORMAL		1
 #define D_OFF_MODE		2
-#define D_LOW_INT_MODE	3
+//#define D_LOW_INT_MODE	3
 
 char dis_state = D_REPOSO;
 
@@ -64,10 +64,13 @@ char tr_state = T_NORMAL_MODE;
 Tm_Control c_tiempo;
 static Tm_Periodo periodos[NUM_PER];
 static Tm_Timeout timeouts[NUM_TO];
+static Tm_Pwm pwms[NUM_PWMS];
 
 char flag_timeout_0 = NO; //display 2 seg
 char flag_timeout_1 = NO; //display 5 seg
 char flag_timeout_2 = NO; //display 10 seg "-"
+
+char flag_timeout_3 = NO; //Activar baja intensidad dis
 
 static char atender_timer(char atienda);
 //-------------------------------------
@@ -85,13 +88,16 @@ int main(void) {
 	uart0_init(SystemCoreClock, 2400); //115200
 
 	/* ============ TIMER ================ */
-	pit_init_ch0(0x124F7); //0xB71AFF -> 500ms || 0x124F7 -> 3.125ms
+	pit_init_ch0(0x752F); //0xB71AFF -> 500ms || 0x124F7 -> 3.125ms || 0x752F-> 1.25ms
 
-	Tm_Inicio(&c_tiempo, periodos, NUM_PER, timeouts, NUM_TO, &atender_timer);
+	Tm_Inicio(&c_tiempo, periodos, NUM_PER, timeouts, NUM_TO, pwms,
+	NUM_PWMS, &atender_timer); //, pwms, NUM_PWMS
 
-	Tm_Inicie_periodo(&c_tiempo, N_PER_NORMAL, 2); //6.25 ms
+	Tm_Inicie_periodo(&c_tiempo, N_PER_NORMAL, 5); //6.25 ms
 
-	Tm_Inicie_timeout(&c_tiempo, N_TO_NEW_DATA, 3076); //10 SEG
+	Tm_Inicie_timeout(&c_tiempo, N_TO_NEW_DATA, 8000); //10 SEG
+
+	Tm_Inicie_pwm(&c_tiempo, N_PWM_PTE_31, 8, 7, COM_PIN); //200 Hz 5ms
 
 	uart_send_byte(XON); //0x11 XON || 0x17 XON REALTERM
 
@@ -113,17 +119,17 @@ int main(void) {
 			break;
 
 		case D_NORMAL:
-
 			if (Tm_Hubo_periodo(&c_tiempo, N_PER_NORMAL)) { // 160Hz
 
 				//-------------------------------------------------- OBTENER DATO DE BUFFER
 				if (ringBuffer_getCount(pRingBufferRx) != 0) {
 
 					ringBuffer_getData(pRingBufferRx, &ch);
-					uart_send_string("C=");
-					uart_send_byte(ch);
-					myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
-
+					/*
+					 uart_send_string("C=");
+					 uart_send_byte(ch);
+					 myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
+					 */
 					if (ringBuffer_isFull(pRingBufferRx)) {
 						uart_send_byte(XOFF); // XOFF
 						flag_xoff = SI;
@@ -133,13 +139,14 @@ int main(void) {
 				if (flag_xoff && ringBuffer_getCount(pRingBufferRx) == 0) {
 
 					//-------------------------------- imprimir ultimo dato
-					ringBuffer_getData(pRingBufferRx, &ch);
-					ringBuffer_getData(pRingBufferRx, &ch);
-					uart_send_string("C=");
-					uart_send_byte(ch);
-					myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
-					//--------------------------------
 
+					//ringBuffer_getData(pRingBufferRx, &ch);
+					ringBuffer_getData(pRingBufferRx, &ch);
+					/*uart_send_string("C=");
+					 uart_send_byte(ch);
+					 myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
+					 */
+					//--------------------------------
 					uart_send_byte(XON); //0x11 XON || 0x17 XON REALTERM
 					flag_xoff = NO;
 				}
@@ -153,7 +160,7 @@ int main(void) {
 				case 37: //%
 					uart_send_byte(XOFF); // XOFF
 					//iniciar time out
-					Tm_Inicie_timeout(&c_tiempo, N_TO_DISPLAY_OFF, 615); //2 SEG
+					Tm_Inicie_timeout(&c_tiempo, N_TO_DISPLAY_OFF, 1600); //2 SEG
 					//TRX XOFF
 					dis_state = D_OFF_MODE;
 					break;
@@ -161,10 +168,10 @@ int main(void) {
 					tr_state = T_NORMAL_MODE;
 					break;
 				case 35: //#
-					dis_state = D_LOW_INT_MODE;
+					//Cambiar PWM
+					Tm_Inicie_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY, 1); //5 SEG
 					//iniciar time out
-					Tm_Inicie_timeout(&c_tiempo, N_TO_LOW_INTENSITY, 1538); //5 SEG
-					Tm_Inicie_periodo(&c_tiempo, N_PER_LOW_INTENSITY, 1); //3.25 ms
+					Tm_Inicie_timeout(&c_tiempo, N_TO_LOW_INTENSITY, 4000); //5 SEG
 					break;
 				}
 
@@ -177,8 +184,12 @@ int main(void) {
 					break;
 				}
 				//------------------------
-
-				if (!flag_timeout_2 && ch !=38 && ch !=36 && ch !=35 && ch !=37 && ch !=13) {
+				//if(ch == 35 ){
+				//	myprintf("P %d",ch);
+				//}
+				//&& ch != 35
+				if (!flag_timeout_2 && ch != 38 && ch != 36 && ch != 35
+						&& ch != 37 && ch != 13) {
 					lcdScan(rxvalueMNS);
 				}
 
@@ -190,7 +201,7 @@ int main(void) {
 			lcdOff();
 			if (flag_timeout_0
 					!= Tm_Hubo_timeout(&c_tiempo, N_TO_DISPLAY_OFF)) {
-				uart_send_string("CH EST\r\n");
+				//uart_send_string("CH EST\r\n");
 				//cambia estado
 				dis_state = D_NORMAL;
 				//TRX XON
@@ -198,89 +209,17 @@ int main(void) {
 			}
 			flag_timeout_0 = Tm_Hubo_timeout(&c_tiempo, N_TO_DISPLAY_OFF);
 			break;
-
-		case D_LOW_INT_MODE:
-
-			if (Tm_Hubo_periodo(&c_tiempo, N_PER_LOW_INTENSITY)) { // 160Hz
-
-				//-------------------------------------------------- OBTENER DATO DE BUFFER
-				if (ringBuffer_getCount(pRingBufferRx) != 0) {
-
-					ringBuffer_getData(pRingBufferRx, &ch);
-					uart_send_string("C=");
-					uart_send_byte(ch);
-					myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
-
-					if (ringBuffer_isFull(pRingBufferRx)) {
-						uart_send_byte(XOFF); // XOFF
-						flag_xoff = SI;
-					}
-				}
-
-				if (flag_xoff && ringBuffer_getCount(pRingBufferRx) == 0) {
-
-					//-------------------------------- imprimir ultimo dato
-					ringBuffer_getData(pRingBufferRx, &ch);
-					ringBuffer_getData(pRingBufferRx, &ch);
-					uart_send_string("C=");
-					uart_send_byte(ch);
-					myprintf(" CO=%d\r\n", ringBuffer_getCount(pRingBufferRx));
-					//--------------------------------
-
-					uart_send_byte(XON); //0x11 XON || 0x17 XON REALTERM
-					flag_xoff = NO;
-				}
-				//--------------------------------------------------------------------------
-
-				//------------------------ ESTADOS
-				switch (ch) {
-				case 38: //&
-					tr_state = T_NEG_MODE;
-					break;
-				case 37: //%
-					uart_send_byte(XOFF); // XOFF
-					//iniciar time out
-					Tm_Inicie_timeout(&c_tiempo, N_TO_DISPLAY_OFF, 615); //2 SEG
-					//TRX XOFF
-					dis_state = D_OFF_MODE;
-					break;
-				case 36: //$ //NORMAL
-					tr_state = T_NORMAL_MODE;
-					break;
-				case 35: //#
-					dis_state = D_LOW_INT_MODE;
-					//iniciar time out
-					Tm_Inicie_timeout(&c_tiempo, N_TO_LOW_INTENSITY, 1538); //5 SEG
-					Tm_Inicie_periodo(&c_tiempo, N_PER_LOW_INTENSITY, 1); //3.25 ms
-					break;
-				}
-
-				switch (tr_state) {
-				case T_NORMAL_MODE:
-					rxvalueMNS = GET_LSB(ch, 4, 1);
-					break;
-				case T_NEG_MODE:
-					rxvalueMNS = 15 - GET_LSB(ch, 4, 1);
-					break;
-				}
-				//------------------------
-				if (!flag_timeout_2 && ch !=38 && ch !=36 && ch !=35 && ch !=37 && ch !=13) {
-					lcdScan(rxvalueMNS);
-				}
-
-				Tm_Baje_periodo(&c_tiempo, N_PER_LOW_INTENSITY);
-			}
-
-			if (flag_timeout_1
-					!= Tm_Hubo_timeout(&c_tiempo, N_TO_LOW_INTENSITY)) {
-				uart_send_string("CH EST\r\n");
-				//cambia estado
-				dis_state = D_NORMAL;
-			}
-			flag_timeout_1 = Tm_Hubo_timeout(&c_tiempo, N_TO_LOW_INTENSITY);
-
-			break;
 		}
+
+		if (flag_timeout_3 != Tm_Hubo_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY)) {
+			Tm_Inicie_pwm(&c_tiempo, N_PWM_PTE_31, 8, 1, COM_PIN); //200 Hz
+		}
+		flag_timeout_3 = Tm_Hubo_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY);
+
+		if (flag_timeout_1 != Tm_Hubo_timeout(&c_tiempo, N_TO_LOW_INTENSITY)) {
+			Tm_Inicie_pwm(&c_tiempo, N_PWM_PTE_31, 4, 3, COM_PIN); //200 Hz
+		}
+		flag_timeout_1 = Tm_Hubo_timeout(&c_tiempo, N_TO_LOW_INTENSITY);
 
 		if (flag_timeout_2 != Tm_Hubo_timeout(&c_tiempo, N_TO_NEW_DATA)) {
 			uart_send_string("TO DISPLAY\r\n");

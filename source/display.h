@@ -19,6 +19,8 @@
 #define SEG_F_PIN       18U
 #define SEG_G_PIN       19U
 
+#define COM_PIN			31U
+
 //get k bits from p position
 #define GET_LSB(number, k, p) (((1 << k) - 1) & (number >> (p - 1)))
 

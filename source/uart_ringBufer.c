@@ -157,7 +157,7 @@ char uart_receive_byte() {
 void UART0_IRQHandler() {
 	// agregar dato al buffer
 	ringBuffer_putData(pRingBufferRx, UART0_D);
-	Tm_Inicie_timeout(&c_tiempo, N_TO_NEW_DATA, 3076); //10 SEG
+	Tm_Inicie_timeout(&c_tiempo, N_TO_NEW_DATA, 8000); //10 SEG
 
 	if (!ringBuffer_isFull(pRingBufferRx)) {
 		flag_xoff = NO;

@@ -75,12 +75,15 @@ void lcdInit() {
 	PORTE->PCR[SEG_F_PIN] |= PORT_PCR_MUX(1); // PORT E MUX
 	PORTE->PCR[SEG_G_PIN] |= PORT_PCR_MUX(1); // PORT E MUX
 
+	PORTE->PCR[COM_PIN] |= PORT_PCR_MUX(1); // PORT E MUX
+
 	PTE->PDDR |= (1u << SEG_A_PIN) | (1u << SEG_B_PIN) | (1u << SEG_C_PIN)
 			| (1u << SEG_D_PIN) | (1u << SEG_E_PIN) | (1u << SEG_F_PIN)
-			| (1u << SEG_G_PIN); // Outputs
+			| (1u << SEG_G_PIN) | (1u << COM_PIN); // Outputs
 	PTE->PSOR |= (1u << SEG_A_PIN) | (1u << SEG_B_PIN) | (1u << SEG_C_PIN)
 			| (1u << SEG_D_PIN) | (1u << SEG_E_PIN) | (1u << SEG_F_PIN)
-			| (1u << SEG_G_PIN); //OFF leds
+			| (1u << SEG_G_PIN)| (1u << COM_PIN); //OFF leds
+
 }
 
 void lcdScan(char idx) {
