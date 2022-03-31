@@ -50,7 +50,6 @@ char ch;		// buffer character
 #define D_REPOSO		0
 #define D_NORMAL		1
 #define D_OFF_MODE		2
-//#define D_LOW_INT_MODE	3
 
 char dis_state = D_REPOSO;
 
@@ -104,6 +103,8 @@ int main(void) {
 	myprintf("Hello World\r\n");
 
 	while (1) {
+
+		//uart_receive_byte();
 
 		if (atender_timer(NO)) {
 			Tm_Procese(&c_tiempo);
