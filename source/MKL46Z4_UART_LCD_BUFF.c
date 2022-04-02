@@ -103,9 +103,9 @@ int main(void) {
 	myprintf("Hello World\r\n");
 
 	while (1) {
-
+		//------------
 		//uart_receive_byte();
-
+		//------------
 		if (atender_timer(NO)) {
 			Tm_Procese(&c_tiempo);
 		}
@@ -212,7 +212,8 @@ int main(void) {
 			break;
 		}
 
-		if (flag_timeout_3 != Tm_Hubo_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY)) {
+		if (flag_timeout_3
+				!= Tm_Hubo_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY)) {
 			Tm_Inicie_pwm(&c_tiempo, N_PWM_PTE_31, 8, 1, COM_PIN); //200 Hz
 		}
 		flag_timeout_3 = Tm_Hubo_timeout(&c_tiempo, N_TO_ACT_LOW_INTENSITY);
